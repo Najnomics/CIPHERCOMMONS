@@ -1,0 +1,11 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+remappings = [
+    "@fhenixprotocol/cofhe-contracts/=lib/cofhe-contracts/contracts/",
+    "@openzeppelin/=lib/cofhe-mock-contracts/node_modules/@openzeppelin/",
+    "cofhe-mock-contracts/=lib/cofhe-mock-contracts/contracts/"
+]
+
+# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

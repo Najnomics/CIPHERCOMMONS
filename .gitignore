@@ -1,0 +1,19 @@
+# General
+.DS_Store
+node_modules/
+dist/
+coverage/
+
+# Apps
+apps/**/.next/
+apps/**/.turbo/
+apps/**/node_modules/
+
+# Foundry artifacts
+contracts/cache/
+contracts/out/
+
+# Context workspace artifacts
+context/
+context/
+
