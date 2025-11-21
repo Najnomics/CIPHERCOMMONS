@@ -134,14 +134,18 @@ contract PredictionPoolTest is CoFheTest {
         pool.settle(marketId, "out");
 
         Vm.Log[] memory entries = vm.getRecordedLogs();
-        bytes32 sig = keccak256(
-            "MarketSettled(bytes32,bytes,uint256,uint256,uint256,uint256,bool)"
-        );
+        bytes32 sig = keccak256("MarketSettled(bytes32,bytes,uint256,uint256,uint256,uint256,bool)");
         bool found;
         for (uint256 i = 0; i < entries.length; i++) {
             if (entries[i].topics[0] == sig) {
-                (bytes memory proof, uint256 totalHash, uint256 yesHash, uint256 noHash, uint256 bucketPointer, bool rangeMode) =
-                    abi.decode(entries[i].data, (bytes, uint256, uint256, uint256, uint256, bool));
+                (
+                    bytes memory proof,
+                    uint256 totalHash,
+                    uint256 yesHash,
+                    uint256 noHash,
+                    uint256 bucketPointer,
+                    bool rangeMode
+                ) = abi.decode(entries[i].data, (bytes, uint256, uint256, uint256, uint256, bool));
                 assertEq(proof, bytes("out"));
                 assertTrue(rangeMode);
                 assertHashValue(totalHash, 50);

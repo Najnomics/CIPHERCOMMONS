@@ -68,10 +68,7 @@ contract PredictionPool {
         InEuint128 memory encryptedMinStake,
         uint16 minParticipants,
         uint8 rangeBucketPercent
-    )
-        external
-        returns (bytes32 marketId)
-    {
+    ) external returns (bytes32 marketId) {
         require(deadline > block.timestamp, "PredictionPool:deadline");
         require(minParticipants <= MAX_PARTICIPANTS, "PredictionPool:threshold-high");
         if (rangeBucketPercent != 0) {
