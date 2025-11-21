@@ -83,12 +83,12 @@ contract ReputationEngine is Ownable {
     /// @param account Subject whose reputation should be compared.
     /// @param encryptedThreshold Encrypted threshold provided by the verifier.
     /// @param reader Address that should receive read permissions for the comparison result.
-    /// @return scorePointer Ciphertext pointer for the subject's score.
+    /// @return scorePtr Ciphertext pointer for the subject's score.
     /// @return attestationPointer Ciphertext pointer for the boolean comparison (1 if >= threshold).
     function evaluateCapability(address account, InEuint64 memory encryptedThreshold, address reader)
         external
         onlyRegistry
-        returns (uint256 scorePointer, uint256 attestationPointer)
+        returns (uint256 scorePtr, uint256 attestationPointer)
     {
         euint64 score = _scores[account];
         euint64 threshold = FHE.asEuint64(encryptedThreshold);
@@ -106,7 +106,7 @@ contract ReputationEngine is Ownable {
             FHE.allow(passes, reader);
         }
 
-        scorePointer = euint64.unwrap(score);
+        scorePtr = euint64.unwrap(score);
         attestationPointer = ebool.unwrap(passes);
 
         emit CapabilityEvaluated(reader, account, euint64.unwrap(threshold), attestationPointer);

@@ -67,7 +67,9 @@ function submitBadge(
 function createMarket(
     bytes32 topic,
     uint256 deadline,
-    inEuint256 calldata encryptedMinStake
+    inEuint256 calldata encryptedMinStake,
+    uint16 minParticipants,
+    uint8 rangeBucketPercent
 ) external;
 
 // Place encrypted stake
@@ -140,4 +142,3 @@ UMA_API_KEY=
 ---
 
 **Goal:** Showcase how FHE unlocks playful, privacy-respecting social coordination primitives that Zcash alone could not deliver.***
-

@@ -4,7 +4,8 @@ out = "out"
 libs = ["lib"]
 remappings = [
     "@fhenixprotocol/cofhe-contracts/=lib/cofhe-contracts/contracts/",
-    "@openzeppelin/=lib/cofhe-mock-contracts/node_modules/@openzeppelin/",
+    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+    "@openzeppelin/contracts-upgradeable/=lib/cofhe-mock-contracts/node_modules/@openzeppelin/contracts-upgradeable/",
     "cofhe-mock-contracts/=lib/cofhe-mock-contracts/contracts/"
 ]
 
