@@ -4,11 +4,13 @@ pragma solidity ^0.8.23;
 import {CoFheTest} from "cofhe-mock-contracts/CoFheTest.sol";
 import {PredictionPool} from "../src/prediction/PredictionPool.sol";
 import {IdentityGate} from "../src/identity/IdentityGate.sol";
+import {ReputationGatekeeper} from "../src/reputation/ReputationGatekeeper.sol";
 import {InEuint128, InEbool} from "@fhenixprotocol/cofhe-contracts/ICofhe.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 contract PredictionPoolTest is CoFheTest {
     IdentityGate private gate;
+    ReputationGatekeeper private gatekeeper;
     PredictionPool private pool;
 
     address private creator;
@@ -17,7 +19,8 @@ contract PredictionPoolTest is CoFheTest {
 
     function setUp() public {
         gate = new IdentityGate();
-        pool = new PredictionPool(gate);
+        gatekeeper = new ReputationGatekeeper();
+        pool = new PredictionPool(gate, gatekeeper);
         gate.setCoordinator(address(pool), true);
 
         creator = makeAddr("creator");
@@ -41,6 +44,8 @@ contract PredictionPoolTest is CoFheTest {
             vm.prank(creator);
             marketId = pool.createMarket(topic, block.timestamp + 3 days, minStake, 2, 0);
         }
+        _allow(marketId, alice);
+        _allow(marketId, bob);
 
         InEuint128 memory aliceStake = createInEuint128(12, alice);
         InEbool memory aliceVote = createInEbool(true, alice);
@@ -69,6 +74,7 @@ contract PredictionPoolTest is CoFheTest {
         InEuint128 memory minStake = createInEuint128(1, creator);
         vm.prank(creator);
         bytes32 marketId = pool.createMarket(topic, block.timestamp + 2 days, minStake, 1, 0);
+        _allow(marketId, alice);
 
         InEuint128 memory stake = createInEuint128(4, alice);
         InEbool memory voteYes = createInEbool(true, alice);
@@ -91,6 +97,7 @@ contract PredictionPoolTest is CoFheTest {
         InEuint128 memory minStake = createInEuint128(1, creator);
         vm.prank(creator);
         bytes32 marketId = pool.createMarket(topic, block.timestamp + 1 days, minStake, 1, 0);
+        _allow(marketId, alice);
 
         vm.expectRevert("PredictionPool:open");
         pool.settle(marketId, "");
@@ -101,6 +108,7 @@ contract PredictionPoolTest is CoFheTest {
         InEuint128 memory minStake = createInEuint128(1, creator);
         vm.prank(creator);
         bytes32 marketId = pool.createMarket(topic, block.timestamp + 1 days, minStake, 2, 0);
+        _allow(marketId, alice);
 
         InEuint128 memory stake = createInEuint128(4, alice);
         InEbool memory voteYes = createInEbool(true, alice);
@@ -117,6 +125,8 @@ contract PredictionPoolTest is CoFheTest {
         InEuint128 memory minStake = createInEuint128(1, creator);
         vm.prank(creator);
         bytes32 marketId = pool.createMarket(topic, block.timestamp + 2 days, minStake, 1, 20);
+        _allow(marketId, alice);
+        _allow(marketId, bob);
 
         InEuint128 memory aliceStake = createInEuint128(30, alice);
         InEbool memory aliceVote = createInEbool(true, alice);
@@ -165,5 +175,30 @@ contract PredictionPoolTest is CoFheTest {
 
         vm.expectRevert("PredictionPool:settled");
         pool.settle(marketId, "");
+    }
+
+    function testReputationGateBlocksUnauthorizedAddresses() public {
+        bytes32 topic = keccak256("prediction:gate");
+        InEuint128 memory minStake = createInEuint128(1, creator);
+        vm.prank(creator);
+        bytes32 marketId = pool.createMarket(topic, block.timestamp + 1 days, minStake, 1, 0);
+
+        _allow(marketId, alice);
+
+        InEuint128 memory stakeAmount = createInEuint128(2, alice);
+        InEbool memory vote = createInEbool(true, alice);
+        vm.prank(alice);
+        pool.stake(marketId, stakeAmount, vote);
+
+        InEuint128 memory bobStake = createInEuint128(1, bob);
+        InEbool memory bobVote = createInEbool(false, bob);
+        vm.expectRevert("PredictionPool:reputation");
+        vm.prank(bob);
+        pool.stake(marketId, bobStake, bobVote);
+    }
+
+    function _allow(bytes32 marketId, address account) internal {
+        bytes32 scope = pool.capabilityScope(marketId);
+        gatekeeper.setEligibility(scope, account, true);
     }
 }

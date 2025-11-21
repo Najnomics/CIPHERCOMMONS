@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 import {FHE, euint128, ebool, InEuint128, InEbool} from "@fhenixprotocol/cofhe-contracts/FHE.sol";
 import {IdentityGate} from "../identity/IdentityGate.sol";
+import {ReputationGatekeeper} from "../reputation/ReputationGatekeeper.sol";
 
 /// @title PredictionPool
 /// @notice Privacy-preserving prediction markets that only expose encrypted aggregates.
@@ -18,6 +19,7 @@ contract PredictionPool {
         uint16 participantCount;
         uint16 minParticipants;
         uint8 rangeBucketPercent;
+        bytes32 capabilityScope;
         bool settled;
     }
 
@@ -32,11 +34,17 @@ contract PredictionPool {
         uint16 participantCount;
         uint16 minParticipants;
         uint8 rangeBucketPercent;
+        bytes32 capabilityScope;
         bool settled;
     }
 
     event MarketCreated(
-        bytes32 indexed marketId, address indexed creator, bytes32 indexed topic, uint256 deadline, uint256 minStakeHash
+        bytes32 indexed marketId,
+        address indexed creator,
+        bytes32 indexed topic,
+        uint256 deadline,
+        uint256 minStakeHash,
+        bytes32 capabilityScope
     );
     event StakePlaced(bytes32 indexed marketId, address indexed account, uint256 amountHash, uint256 voteHash);
     event MarketSettled(
@@ -50,6 +58,7 @@ contract PredictionPool {
     );
 
     IdentityGate public immutable IDENTITY_GATE;
+    ReputationGatekeeper public immutable GATEKEEPER;
 
     mapping(bytes32 => Market) private _markets;
     mapping(bytes32 => bool) private _marketExists;
@@ -57,8 +66,9 @@ contract PredictionPool {
 
     uint16 public constant MAX_PARTICIPANTS = 100;
 
-    constructor(IdentityGate identityGate_) {
+    constructor(IdentityGate identityGate_, ReputationGatekeeper gatekeeper_) {
         IDENTITY_GATE = identityGate_;
+        GATEKEEPER = gatekeeper_;
     }
 
     /// @notice Create a new encrypted prediction market.
@@ -82,6 +92,8 @@ contract PredictionPool {
         euint128 minStake = FHE.asEuint128(encryptedMinStake);
         FHE.allowThis(minStake);
 
+        bytes32 marketScope = _capabilityScope(marketId);
+
         _markets[marketId] = Market({
             creator: msg.sender,
             topic: topic,
@@ -93,11 +105,12 @@ contract PredictionPool {
             participantCount: 0,
             minParticipants: minParticipants,
             rangeBucketPercent: rangeBucketPercent,
+            capabilityScope: marketScope,
             settled: false
         });
         _marketExists[marketId] = true;
 
-        emit MarketCreated(marketId, msg.sender, topic, deadline, euint128.unwrap(minStake));
+        emit MarketCreated(marketId, msg.sender, topic, deadline, euint128.unwrap(minStake), marketScope);
     }
 
     /// @notice Place an encrypted stake and vote on a market once per verified identity.
@@ -108,6 +121,7 @@ contract PredictionPool {
         require(!market.settled, "PredictionPool:settled");
         require(!hasStaked[marketId][msg.sender], "PredictionPool:repeat");
         require(market.participantCount < MAX_PARTICIPANTS, "PredictionPool:cap");
+        require(GATEKEEPER.isEligible(market.capabilityScope, msg.sender), "PredictionPool:reputation");
 
         IDENTITY_GATE.consumeScope(msg.sender, _scopeKey(marketId));
         hasStaked[marketId][msg.sender] = true;
@@ -185,12 +199,21 @@ contract PredictionPool {
             participantCount: market.participantCount,
             minParticipants: market.minParticipants,
             rangeBucketPercent: market.rangeBucketPercent,
+            capabilityScope: market.capabilityScope,
             settled: market.settled
         });
     }
 
     function _scopeKey(bytes32 marketId) private pure returns (bytes32) {
         return keccak256(abi.encodePacked("ciphercommons:market", marketId));
+    }
+
+    function capabilityScope(bytes32 marketId) external pure returns (bytes32) {
+        return _capabilityScope(marketId);
+    }
+
+    function _capabilityScope(bytes32 marketId) private pure returns (bytes32) {
+        return keccak256(abi.encodePacked("ciphercommons:capability", marketId));
     }
 
     /// @dev Returns the ciphertext pointer describing the ratio bucket when range reveal is enabled.

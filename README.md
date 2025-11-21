@@ -23,6 +23,7 @@ CipherCommons experiments with composable privacy by blending encrypted reputati
    - Markets accept shielded ZEC stakes bridged through Fhenix.
    - Outcome votes submitted as encrypted ballots.
    - Settlement decrypts final tallies only; per-user stakes remain hidden.
+   - ReputationGatekeeper contracts enforce that only cleared accounts can stake in a given market scope.
 
 3. **Sybil-Resistant Identity**
    - Uses Proof-of-Personhood ceremonies (Gitcoin Passport, BrightID).
@@ -45,7 +46,8 @@ User Wallet (Zcash Shielded)
 CipherCommons Contracts (Fhenix)
   ├─ ReputationEngine.sol – maintains encrypted reputation vectors
   ├─ PredictionPool.sol – handles shielded staking & payouts
-  └─ IdentityGate.sol – enforces sybil limits via FHE attestations
+  ├─ IdentityGate.sol – enforces sybil limits via FHE attestations
+  └─ ReputationGatekeeper.sol – off-chain attestors flip capability scopes for eligible accounts
 
 Off-chain Services
   ├─ Snapshot adapter converts DAO proposals into encrypted ballots

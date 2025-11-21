@@ -6,12 +6,14 @@ import {CipherCommonsRegistry} from "../src/registry/CipherCommonsRegistry.sol";
 import {ReputationEngine} from "../src/reputation/ReputationEngine.sol";
 import {PredictionPool} from "../src/prediction/PredictionPool.sol";
 import {IdentityGate} from "../src/identity/IdentityGate.sol";
+import {ReputationGatekeeper} from "../src/reputation/ReputationGatekeeper.sol";
 import {Permission, PermissionUtils} from "cofhe-mock-contracts/Permissioned.sol";
 import {InEuint64} from "@fhenixprotocol/cofhe-contracts/ICofhe.sol";
 
 contract CipherCommonsRegistryTest is CoFheTest {
     ReputationEngine private reputation;
     IdentityGate private identity;
+    ReputationGatekeeper private gatekeeper;
     PredictionPool private pool;
     CipherCommonsRegistry private registry;
 
@@ -24,7 +26,8 @@ contract CipherCommonsRegistryTest is CoFheTest {
     function setUp() public {
         reputation = new ReputationEngine();
         identity = new IdentityGate();
-        pool = new PredictionPool(identity);
+        gatekeeper = new ReputationGatekeeper();
+        pool = new PredictionPool(identity, gatekeeper);
         registry = new CipherCommonsRegistry(reputation, pool, identity);
 
         reputation.setRegistry(address(registry));
@@ -76,4 +79,3 @@ contract CipherCommonsRegistryTest is CoFheTest {
         assertHashValue(failedPointer, 0);
     }
 }
-

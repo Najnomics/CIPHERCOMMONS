@@ -6,11 +6,13 @@ import {IdentityGate} from "../src/identity/IdentityGate.sol";
 import {PredictionPool} from "../src/prediction/PredictionPool.sol";
 import {ReputationEngine} from "../src/reputation/ReputationEngine.sol";
 import {CipherCommonsRegistry} from "../src/registry/CipherCommonsRegistry.sol";
+import {ReputationGatekeeper} from "../src/reputation/ReputationGatekeeper.sol";
 
 /// @notice Deploys the core CipherCommons stack and wires dependencies.
 contract DeployScript is Script {
     struct Deployment {
         IdentityGate identity;
+        ReputationGatekeeper gatekeeper;
         PredictionPool pool;
         ReputationEngine reputation;
         CipherCommonsRegistry registry;
@@ -23,7 +25,8 @@ contract DeployScript is Script {
         vm.startBroadcast(deployerKey);
 
         IdentityGate identity = new IdentityGate();
-        PredictionPool pool = new PredictionPool(identity);
+        ReputationGatekeeper gatekeeper = new ReputationGatekeeper();
+        PredictionPool pool = new PredictionPool(identity, gatekeeper);
         ReputationEngine reputation = new ReputationEngine();
         CipherCommonsRegistry registry = new CipherCommonsRegistry(reputation, pool, identity);
 
@@ -33,11 +36,18 @@ contract DeployScript is Script {
         vm.stopBroadcast();
 
         console2.log("IdentityGate:", address(identity));
+        console2.log("ReputationGatekeeper:", address(gatekeeper));
         console2.log("PredictionPool:", address(pool));
         console2.log("ReputationEngine:", address(reputation));
         console2.log("CipherCommonsRegistry:", address(registry));
         console2.log("Configured by deployer:", deployer);
 
-        deployment = Deployment({identity: identity, pool: pool, reputation: reputation, registry: registry});
+        deployment = Deployment({
+            identity: identity,
+            gatekeeper: gatekeeper,
+            pool: pool,
+            reputation: reputation,
+            registry: registry
+        });
     }
 }
