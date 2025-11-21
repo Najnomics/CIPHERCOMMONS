@@ -12,8 +12,9 @@ apps/**/node_modules/
 # Foundry artifacts
 contracts/cache/
 contracts/out/
+cache/
+out/
 
 # Context workspace artifacts
 context/
 context/
-

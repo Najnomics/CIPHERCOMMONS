@@ -115,6 +115,21 @@ pnpm build                 # optional production bundle
 pnpm dev                   # start the Next.js dev server
 ```
 
+Contracts can also be compiled from the repo root now that a top-level `foundry.toml` mirrors the `contracts/` configuration. If you hit missing OpenZeppelin imports, double-check that you are running `forge` from the repo or `contracts/` directory so the remappings resolve correctly.
+
+### Deploy the stack
+
+```
+export FHENIX_RPC_URL=<https://rpc.fhenix.example>
+export PRIVATE_KEY=<hex-private-key>
+cd contracts
+forge script script/Deploy.s.sol:DeployScript \
+  --rpc-url $FHENIX_RPC_URL \
+  --broadcast
+```
+
+The script deploys IdentityGate, PredictionPool, ReputationEngine, and CipherCommonsRegistry, wires the dependencies (coordinator + registry permissions), and logs the resulting addresses.
+
 `.env` template:
 
 ```
